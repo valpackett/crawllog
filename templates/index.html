@@ -16,6 +16,9 @@
     {% if 'me' in session %}
     <section>
       <h2>Your accounts</h2>
+      <p>
+        Add your usernames on public DCSS game servers and Crawllog will automatically post games (with scores higher than a given number).
+      </p>
       {% for account in user.user_servers %}
       <div class="server-acct">
         <form action="/server-accounts/{{account.id}}" method="POST">
@@ -31,6 +34,7 @@
         </form>
       </div>
       {% endfor %}
+      <h3>Add new account</h3>
       <div class="server-acct">
         <form action="/server-accounts" method="POST">
           <select name="server_id">

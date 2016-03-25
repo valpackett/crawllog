@@ -7,7 +7,6 @@ from processing import process_log
 
 @app.route('/')
 def index():
-    print(session)
     if 'me' in session:
         user = User.query.filter_by(uri=session['me']).first()
         servers = Server.query.all()
@@ -61,7 +60,6 @@ def logout():
 @app.route('/micropub-callback')
 @micropub.authorized_handler
 def micropub_callback(resp):
-    print('success!', resp.me, resp.access_token, resp.next_url, resp.error)
     session['me'] = resp.me
     user = User.query.filter_by(uri=resp.me).first()
     if user:

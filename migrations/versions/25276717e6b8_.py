@@ -14,14 +14,14 @@ from alembic import op
 import sqlalchemy as sa
 
 
-def upgrade():
+def downgrade():
     op.drop_table('server_log')
     op.drop_table('user')
     op.drop_table('server')
     op.drop_table('user_on_server')
 
 
-def downgrade():
+def upgrade():
     op.create_table('user_on_server',
     sa.Column('id', sa.INTEGER(), nullable=False),
     sa.Column('name', sa.TEXT(), nullable=True),

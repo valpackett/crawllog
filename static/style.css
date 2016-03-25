@@ -1,0 +1,4 @@
+body { font-family: sans-serif; max-width: 900px; margin: 0 auto; }
+a { color: #ba2323; }
+a:hover { color: #da4343; }
+section { background: #efefef; border-radius: 3px; margin: 1em 0; padding: 0.5em; }

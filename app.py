@@ -2,7 +2,7 @@ import time
 from requests_futures.sessions import FuturesSession
 from threading import Thread
 from uritemplate import expand
-from flask import Flask, session, redirect, url_for, request
+from flask import Flask, session, redirect, url_for, request, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask.ext.micropub import MicropubClient
 
@@ -37,6 +37,7 @@ class User(db.Model):
 
 class UserOnServer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.Text)
     auto_pub_threshold = db.Column(db.Integer)
     server_id = db.Column(db.Integer, db.ForeignKey('server.id'))
     server = db.relationship('Server', backref=db.backref('server_users', lazy='dynamic'))
@@ -45,15 +46,57 @@ class UserOnServer(db.Model):
 
 
 @app.route('/')
-def hello():
-    if session['me']:
-        return 'hi %s!' % session['me']
+def index():
+    print(session)
+    if 'me' in session:
+        user = User.query.filter_by(uri=session['me']).first()
+        server_accts = user.user_servers
+        servers = Server.query.all()
+        return render_template('index.html', user=user,
+                               server_accts=server_accts, servers=servers)
     else:
-        return 'not logged in'
+        return render_template('index.html')
+
+
+@app.route('/server-accounts', methods=['POST'])
+def server_account_new():
+    user = User.query.filter_by(uri=session['me']).first_or_404()
+    server = Server.query.filter_by(id=request.form['server_id']).first_or_404()
+    account = UserOnServer(
+        name=request.form['name'],
+        auto_pub_threshold=int(request.form['auto_pub_threshold']),
+        user=user,
+        server=server
+    )
+    db.session.add(account)
+    db.session.commit()
+    return redirect(url_for('index'))
+
+@app.route('/server-accounts/<int:account_id>', methods=['POST'])
+def server_account_edit(account_id):
+    account = UserOnServer.query.filter_by(id=account_id).first_or_404()
+    if 'delete' in request.args:
+        db.session.delete(account)
+    else:
+        account.name = request.form['name']
+        account.auto_pub_threshold = int(request.form['auto_pub_threshold'])
+        account.server = Server.query.filter_by(id=request.form['server_id']).first_or_404()
+        db.session.add(account)
+    db.session.commit()
+    return redirect(url_for('index'))
+
+@app.route('/upload-log', methods=['POST'])
+def upload_log():
+    return redirect(url_for('index'))
 
 @app.route('/login')
 def login():
     return micropub.authorize(me=request.args.get('me'), scope='post')
+
+@app.route('/logout')
+def logout():
+    session['me'] = None
+    return redirect(url_for('index'))
 
 @app.route('/micropub-callback')
 @micropub.authorized_handler
@@ -68,7 +111,7 @@ def micropub_callback(resp):
     else:
         db.session.add(User(uri=resp.me, micropub_uri=resp.micropub_endpoint, access_token=resp.access_token))
     db.session.commit()
-    return redirect('/')
+    return redirect(url_for('index'))
 
 
 def follow_logs():

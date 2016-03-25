@@ -14,6 +14,10 @@ app.secret_key = 'TESTTESTKEY'
 db = SQLAlchemy(app)
 micropub = MicropubClient(app, client_id='https://dc53dc54.ngrok.io')
 
+re_name = re.compile(r'name=([^:]+)')
+re_end  = re.compile(r'end=([^:]+)')
+re_end_fix = re.compile(r'(\d{8})(\d{6}).*')
+
 
 def num_or(n):
     if isinstance(n, str) and len(n) > 0:
@@ -92,6 +96,8 @@ def server_account_edit(account_id):
 
 @app.route('/upload-log', methods=['POST'])
 def upload_log():
+    user = User.query.filter_by(uri=session['me']).first_or_404()
+    process_log(request.files['file'].read(), user)
     return redirect(url_for('index'))
 
 @app.route('/login')
@@ -119,6 +125,11 @@ def micropub_callback(resp):
     return redirect(url_for('index'))
 
 
+def process_log(text, user, respect_threshold=False):
+    print(text)
+    print(user)
+
+
 def follow_logs():
     http = FuturesSession()
     while True:
@@ -141,8 +152,23 @@ def follow_logs():
             print('%s reading' % log.uri)
             log.position += int(resp.headers['Content-Length'])
             for line in resp.iter_lines():
-                if line:
-                    print(line)
+                if not line:
+                    continue
+                line = line.decode('utf-8', errors='replace')
+                name = next(iter(re_name.findall(line)), None)
+                end = next(iter(re_end.findall(line)), None)
+                if not (name and end):
+                    print('could not parse log entry: %s' % line)
+                    continue
+                account = UserOnServer.query.filter_by(server=log.server, name=name).first()
+                if not account:
+                    print('no account found for %s on server %s' % (name, log.server.name))
+                    continue
+                end = re_end_fix.sub(r'\1-\2', end)
+                end = end[:4] + str(int(end[4:6]) + 1).zfill(2) + end[6:] # WTF
+                log_uri = expand(log.server.log_uri_template, {'name': name, 'end': end})
+                text = http.get(log_uri).result().text
+                process_log(text, account.user, respect_threshold=True)
             print('%s now at byte %s' % (log.uri, log.position))
             s.add(log)
         s.commit()

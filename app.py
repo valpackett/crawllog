@@ -1,3 +1,4 @@
+import re
 import time
 from requests_futures.sessions import FuturesSession
 from threading import Thread
@@ -12,6 +13,12 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'TESTTESTKEY'
 db = SQLAlchemy(app)
 micropub = MicropubClient(app, client_id='https://dc53dc54.ngrok.io')
+
+
+def num_or(n):
+    if isinstance(n, str) and len(n) > 0:
+        return int(n)
+    return n
 
 
 class Server(db.Model):
@@ -50,10 +57,8 @@ def index():
     print(session)
     if 'me' in session:
         user = User.query.filter_by(uri=session['me']).first()
-        server_accts = user.user_servers
         servers = Server.query.all()
-        return render_template('index.html', user=user,
-                               server_accts=server_accts, servers=servers)
+        return render_template('index.html', user=user, servers=servers)
     else:
         return render_template('index.html')
 
@@ -61,10 +66,10 @@ def index():
 @app.route('/server-accounts', methods=['POST'])
 def server_account_new():
     user = User.query.filter_by(uri=session['me']).first_or_404()
-    server = Server.query.filter_by(id=request.form['server_id']).first_or_404()
+    server = Server.query.get(int(request.form['server_id']))
     account = UserOnServer(
         name=request.form['name'],
-        auto_pub_threshold=int(request.form['auto_pub_threshold']),
+        auto_pub_threshold=num_or(request.form['auto_pub_threshold']),
         user=user,
         server=server
     )
@@ -74,13 +79,13 @@ def server_account_new():
 
 @app.route('/server-accounts/<int:account_id>', methods=['POST'])
 def server_account_edit(account_id):
-    account = UserOnServer.query.filter_by(id=account_id).first_or_404()
+    account = UserOnServer.query.get_or_404(account_id)
     if 'delete' in request.args:
         db.session.delete(account)
     else:
         account.name = request.form['name']
-        account.auto_pub_threshold = int(request.form['auto_pub_threshold'])
-        account.server = Server.query.filter_by(id=request.form['server_id']).first_or_404()
+        account.auto_pub_threshold = num_or(request.form['auto_pub_threshold'])
+        account.server = Server.query.get_or_404(request.form['server_id'])
         db.session.add(account)
     db.session.commit()
     return redirect(url_for('index'))

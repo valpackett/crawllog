@@ -16,7 +16,7 @@
     {% if 'me' in session %}
     <section>
       <h2>Your accounts</h2>
-      {% for account in server_accts %}
+      {% for account in user.user_servers %}
       <div class="server-acct">
         <form action="/server-accounts/{{account.id}}" method="POST">
           <select name="server_id">

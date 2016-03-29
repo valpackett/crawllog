@@ -45,7 +45,7 @@ def server_account_edit(account_id):
 @app.route('/upload-log', methods=['POST'])
 def upload_log():
     user = User.query.filter_by(uri=session['me']).first_or_404()
-    process_log(request.files['file'].read(), user)
+    process_log(request.files['file'].read().decode('utf-8'), user)
     return redirect(url_for('index'))
 
 @app.route('/login')
@@ -68,5 +68,20 @@ def micropub_callback(resp):
         db.session.add(user)
     else:
         db.session.add(User(uri=resp.me, micropub_uri=resp.micropub_endpoint, access_token=resp.access_token))
+    db.session.commit()
+    return redirect(url_for('index'))
+
+@app.route('/test-login')
+def test_login():
+    if not app.debug:
+        return 'sorry ;)'
+    session['me'] = me = request.args.get('me')
+    user = User.query.filter_by(uri=me).first()
+    if user:
+        user.micropub_uri = request.args.get('micropub_endpoint')
+        user.access_token = request.args.get('access_token')
+        db.session.add(user)
+    else:
+        db.session.add(User(uri=me, micropub_uri=request.args.get('micropub_endpoint'), access_token=request.args.get('access_token')))
     db.session.commit()
     return redirect(url_for('index'))

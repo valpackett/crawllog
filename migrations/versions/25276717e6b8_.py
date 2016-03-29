@@ -35,7 +35,6 @@ def upgrade():
     op.create_table('server',
     sa.Column('id', sa.INTEGER(), nullable=False),
     sa.Column('name', sa.TEXT(), nullable=True),
-    sa.Column('log_uri_template', sa.TEXT(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('user',

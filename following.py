@@ -7,9 +7,18 @@ from models import *
 from processing import process_log
 
 
-re_name = re.compile(r'name=([^:]+)')
-re_end  = re.compile(r'end=([^:]+)')
+def parse_xlogfile(line):
+    result = {}
+    for (k, v) in [kv.split('=') for kv in line.replace('::', '\n').split(':')]:
+        result[k.replace('\n', ':')] = v.replace('\n', ':')
+    return result
+
+
 re_end_fix = re.compile(r'(\d{8})(\d{6}).*')
+def crawl_fixed_end(end):
+    # Why the hell do Crawl months start at zero?
+    end = re_end_fix.sub(r'\1-\2', end)
+    return end[:4] + str(int(end[4:6]) + 1).zfill(2) + end[6:]
 
 
 def follow_logs():
@@ -37,18 +46,19 @@ def follow_logs():
                 if not line:
                     continue
                 line = line.decode('utf-8', errors='replace')
-                name = next(iter(re_name.findall(line)), None)
-                end = next(iter(re_end.findall(line)), None)
-                if not (name and end):
+                data = {}
+                try:
+                    data = parse_xlogfile(line)
+                    if log.crawl_month_fix:
+                        data['end'] = crawl_fixed_end(data['end'])
+                except:
                     app.logger.warning('could not parse log entry: %s' % line)
                     continue
-                account = UserOnServer.query.filter_by(server=log.server, name=name).first()
+                account = s.query(UserOnServer).filter_by(server=log.server, name=data['name']).first()
                 if not account:
-                    app.logger.info('no account found for %s on server %s' % (name, log.server.name))
+                    app.logger.info('no account found for %s on server %s' % (data['name'], log.server.name))
                     continue
-                end = re_end_fix.sub(r'\1-\2', end)
-                end = end[:4] + str(int(end[4:6]) + 1).zfill(2) + end[6:] # WTF
-                log_uri = expand(log.server.log_uri_template, {'name': name, 'end': end})
+                log_uri = expand(log.uri_template, data)
                 text = http.get(log_uri).result().text
                 process_log(text, account.user, respect_threshold=True)
             app.logger.info('%s now at byte %s' % (log.uri, log.position))

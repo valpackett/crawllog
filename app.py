@@ -1,4 +1,4 @@
-from flask import session, redirect, url_for, request, render_template
+from flask import session, redirect, url_for, request, render_template, flash
 from conf import *
 from models import *
 from util import *
@@ -45,7 +45,17 @@ def server_account_edit(account_id):
 @app.route('/upload-log', methods=['POST'])
 def upload_log():
     user = User.query.filter_by(uri=session['me']).first_or_404()
-    process_log(request.files['file'].read().decode('utf-8'), user)
+    result = process_log(request.files['file'].read().decode('utf-8'), user)
+    if result.status_code >= 300:
+        reason = 'Something might be wrong with your server.'
+        if result.status_code == 401:
+            reason = 'Looks like you need to sign out and sign in again.'
+        body = '%s %s\n' % (result.status_code, result.reason)
+        body += '\n'.join(['%s: %s' % x for x in result.headers.items()])
+        body += '\n\n' + result.text
+        flash('Unfortunately, posting did not succeed! %s Response from your server: <pre>%s</pre>' % (reason, body))
+    else:
+        flash('Successfully <a href="%s">posted</a>!' % result.headers.get('Location'))
     return redirect(url_for('index'))
 
 @app.route('/login')
@@ -77,11 +87,7 @@ def test_login():
         return 'sorry ;)'
     session['me'] = me = request.args.get('me')
     user = User.query.filter_by(uri=me).first()
-    if user:
-        user.micropub_uri = request.args.get('micropub_endpoint')
-        user.access_token = request.args.get('access_token')
-        db.session.add(user)
-    else:
+    if not user:
         db.session.add(User(uri=me, micropub_uri=request.args.get('micropub_endpoint'), access_token=request.args.get('access_token')))
-    db.session.commit()
+        db.session.commit()
     return redirect(url_for('index'))

@@ -5,10 +5,6 @@ from util import *
 from processing import process_log
 
 
-old_url_for = url_for
-url_for = lambda e, v: old_url_for(app.config['APPLICATION_ROOT'] + e.lstrip('/'), v)
-
-
 @app.route('/')
 def index():
     if 'me' in session:

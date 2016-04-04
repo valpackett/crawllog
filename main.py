@@ -27,11 +27,12 @@ def serve():
     from following import follow_logs
     from aiohttp_wsgi import serve
     Thread(target=follow_logs).start()
+    xapp = PrefixMiddleware(app)
     if 'CRAWLLOG_PROD' in os.environ:
-        serve(app, unix_socket=os.environ['CRAWLLOG_SOCKET'], unix_socket_perms=0o660)
+        serve(xapp, unix_socket=os.environ['CRAWLLOG_SOCKET'], unix_socket_perms=0o660)
     else:
         print('Serving: dev')
-        serve(app, port=8080)
+        serve(xapp, port=8080)
 
 if __name__ == "__main__":
     manager.run()

@@ -18,5 +18,4 @@ requests-futures==0.9.7
 simplejson==3.8.2
 SQLAlchemy==1.0.12
 uritemplate==0.6
-uWSGI==2.0.12
 Werkzeug==0.11.4

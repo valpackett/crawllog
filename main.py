@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+import os
 from flask.ext.script import Manager
 from flask_migrate import Migrate, MigrateCommand
 from conf import *
@@ -17,10 +19,17 @@ def upsert_content():
 def serve():
     from threading import Thread
     from following import follow_logs
-    Thread(target=follow_logs).start()
-    app.debug = True
     from aiohttp_wsgi import serve
-    serve(app)
+    Thread(target=follow_logs).start()
+    if 'CRAWLLOG_PROD' in os.environ:
+        app.debug = False
+        serve(app, unix_socket=os.environ['CRAWLLOG_SOCKET'], unix_socket_perms=0o660)
+    else:
+        app.debug = True
+        app.secret_key = 'TESTTESTKEY'
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
+        print('Serving: dev')
+        serve(app, port=8080)
 
 if __name__ == "__main__":
     manager.run()

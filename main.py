@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 import os
+import sys
+import logging
 from flask.ext.script import Manager
 from flask_migrate import Migrate, MigrateCommand
 from conf import *
@@ -29,6 +31,7 @@ def serve():
     Thread(target=follow_logs).start()
     xapp = PrefixMiddleware(app)
     if 'CRAWLLOG_PROD' in os.environ:
+        logging.basicConfig(stream=sys.stdout, level=logging.INFO)
         serve(xapp, unix_socket=os.environ['CRAWLLOG_SOCKET'], unix_socket_perms=0o660)
     else:
         print('Serving: dev')

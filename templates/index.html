@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8">
     <title>Crawllog</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="static/style.css">
   </head>
   <body>
     <header class="h-x-app">
       <h1 class="p-name">Crawllog</h1>
       {% if 'me' in session %}
-      Hi, {{session['me']}}! <a href="/logout">Log out</a>
+      Hi, {{session['me']}}! <a href="logout">Log out</a>
       {% endif %}
     </header>
 
@@ -29,7 +29,7 @@
       </p>
       {% for account in user.user_servers %}
       <div class="server-acct">
-        <form action="/server-accounts/{{account.id}}" method="POST">
+        <form action="server-accounts/{{account.id}}" method="POST">
           <select name="server_id">
           {% for server in servers %}<option value="{{server.id}}" {{'selected' if server == account.server}}>{{server.name}}</option>{% endfor %}
           </select>
@@ -37,14 +37,14 @@
           <input type="number" name="auto_pub_threshold" placeholder="Autopublishing threshold" value="{{account.auto_pub_threshold}}">
           <button>Save</button>
         </form>
-        <form action="/server-accounts/{{account.id}}?delete" method="POST">
+        <form action="server-accounts/{{account.id}}?delete" method="POST">
           <button>Delete</button>
         </form>
       </div>
       {% endfor %}
       <h3>Add new account</h3>
       <div class="server-acct">
-        <form action="/server-accounts" method="POST">
+        <form action="server-accounts" method="POST">
           <select name="server_id">
           {% for server in servers %}<option value="{{server.id}}">{{server.name}}</option>{% endfor %}
           </select>
@@ -57,7 +57,7 @@
 
     <section>
       <h2>Upload manually</h2>
-      <form action="/upload-log" method="POST" enctype="multipart/form-data">
+      <form action="upload-log" method="POST" enctype="multipart/form-data">
         <input type="file" name="file">
         <button>Post</button>
       </form>
@@ -65,7 +65,7 @@
 
     {% else %}
     <section>
-      <form action="/login" method="GET">
+      <form action="login" method="GET">
         <input type="url" name="me" placeholder="https://yourdomain.example">
         <button>Sign In</button>
       </form>

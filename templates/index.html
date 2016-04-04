@@ -1,85 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Crawllog</title>
-    <link rel="stylesheet" href="static/style.css">
-  </head>
-  <body>
-    <header class="h-x-app">
-      <h1 class="p-name">Crawllog</h1>
-      {% if 'me' in session %}
-      Hi, {{session['me']}}! <a href="logout">Log out</a>
-      {% endif %}
-    </header>
+	<head>
+		<meta charset="utf-8">
+		<title>Crawllog</title>
+		<link rel="stylesheet" href="static/style.css">
+	</head>
+	<body>
+		<header class="h-x-app">
+			<h1 class="p-name">Crawllog</h1>
+			{% if 'me' in session %}
+			Hi, {{session['me']}}! <a href="logout">Log out</a>
+			{% endif %}
+		</header>
 
-    {% with messages = get_flashed_messages() %}
-    {% if messages %}
-      {% for message in messages %}
-      <section class="flash"> {{ message|safe }} </section>
-      {% endfor %}
-    {% endif %}
-    {% endwith %}
+		{% with messages = get_flashed_messages() %}
+		{% if messages %}
+		{% for message in messages %}
+		<section class="flash"> {{ message|safe }} </section>
+		{% endfor %}
+		{% endif %}
+		{% endwith %}
 
-    {% if 'me' in session %}
-    <section>
-      <h2>Your accounts</h2>
-      <p>
-        Add your usernames on public DCSS game servers and Crawllog will automatically post games (with scores higher than a given number).
-      </p>
-      {% for account in user.user_servers %}
-      <div class="server-acct">
-        <form action="server-accounts/{{account.id}}" method="POST">
-          <select name="server_id">
-          {% for server in servers %}<option value="{{server.id}}" {{'selected' if server == account.server}}>{{server.name}}</option>{% endfor %}
-          </select>
-          <input type="text" name="name" placeholder="Account name" value="{{account.name}}">
-          <input type="number" name="auto_pub_threshold" placeholder="Autopublishing threshold" value="{{account.auto_pub_threshold}}">
-          <button>Save</button>
-        </form>
-        <form action="server-accounts/{{account.id}}?delete" method="POST">
-          <button>Delete</button>
-        </form>
-      </div>
-      {% endfor %}
-      <h3>Add new account</h3>
-      <div class="server-acct">
-        <form action="server-accounts" method="POST">
-          <select name="server_id">
-          {% for server in servers %}<option value="{{server.id}}">{{server.name}}</option>{% endfor %}
-          </select>
-          <input type="text" name="name" placeholder="Account name">
-          <input type="number" name="auto_pub_threshold" placeholder="Autopublishing threshold">
-          <button>Add</button>
-        </form>
-      </div>
-    </section>
+		{% if 'me' in session %}
+		<section>
+			<h2>Your accounts</h2>
+			<p>
+				Add your usernames on public DCSS game servers and Crawllog will automatically post games (with scores higher than a given number).
+			</p>
+			{% for account in user.user_servers %}
+			<div class="server-acct">
+				<form action="server-accounts/{{account.id}}" method="POST">
+					<select name="server_id">
+						{% for server in servers %}<option value="{{server.id}}" {{'selected' if server == account.server}}>{{server.name}}</option>{% endfor %}
+					</select>
+					<input type="text" name="name" placeholder="Account name" value="{{account.name}}">
+					<input type="number" name="auto_pub_threshold" placeholder="Autopublishing threshold" value="{{account.auto_pub_threshold}}">
+					<button>Save</button>
+				</form>
+				<form action="server-accounts/{{account.id}}?delete" method="POST">
+					<button>Delete</button>
+				</form>
+			</div>
+			{% endfor %}
+			<h3>Add new account</h3>
+			<div class="server-acct">
+				<form action="server-accounts" method="POST">
+					<select name="server_id">
+						{% for server in servers %}<option value="{{server.id}}">{{server.name}}</option>{% endfor %}
+					</select>
+					<input type="text" name="name" placeholder="Account name">
+					<input type="number" name="auto_pub_threshold" placeholder="Autopublishing threshold">
+					<button>Add</button>
+				</form>
+			</div>
+		</section>
 
-    <section>
-      <h2>Upload manually</h2>
-      <form action="upload-log" method="POST" enctype="multipart/form-data">
-        <input type="file" name="file">
-        <button>Post</button>
-      </form>
-    </section>
+		<section>
+			<h2>Upload manually</h2>
+			<form action="upload-log" method="POST" enctype="multipart/form-data">
+				<input type="file" name="file">
+				<button>Post</button>
+			</form>
+		</section>
 
-    {% else %}
-    <section>
-      <form action="login" method="GET">
-        <input type="url" name="me" placeholder="https://yourdomain.example">
-        <button>Sign In</button>
-      </form>
-    </section>
-    {% endif %}
+		{% else %}
+		<section>
+			<form action="login" method="GET">
+				<input type="url" name="me" placeholder="https://yourdomain.example">
+				<button>Sign In</button>
+			</form>
+		</section>
+		{% endif %}
 
-    <section>
-      <p>
-        Crawllog posts your <a href="http://crawl.develz.org/">Dungeon Crawl Stone Soup</a> game logs (morgue files) to your website using <a href="http://micropub.net/">Micropub</a>.
-      </p>
-    </section>
+		<section>
+			<p>
+				Crawllog posts your <a href="http://crawl.develz.org/">Dungeon Crawl Stone Soup</a> game logs (morgue files) to your website using <a href="http://micropub.net/">Micropub</a>.
+			</p>
+		</section>
 
-    <footer>
-      <a href="https://unrelenting.technology">unrelenting.technology</a>
-    </footer>
-  </body>
+		<footer>
+			<a href="https://unrelenting.technology">unrelenting.technology</a>
+		</footer>
+	</body>
 </html>

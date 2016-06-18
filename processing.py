@@ -15,7 +15,7 @@ re_crawl_victory = re.compile(r'... and (?P<runes>\d+) runes')
 p_crawl_victory  = lambda x: re_crawl_victory.sub('... and <span class="p-runes">\g<runes></span> runes', x)
 
 
-def process_log(text, user, respect_threshold=False):
+def process_log(text, user, log_uri=None, respect_threshold=False):
     text = p_crawl_version(text)
     text = p_crawl_score(text)
     text = p_crawl_time(text)
@@ -24,10 +24,10 @@ def process_log(text, user, respect_threshold=False):
     return post_micropub(
         '<pre class="crawllog-log crawllog-summary p-x-game-log h-x-game-log">%s</pre>' % summary,
         '<pre class="crawllog-log crawllog-full p-x-game-log h-x-game-log">%s</pre>' % text,
-        user)
+        user, log_uri)
 
 
-def post_micropub(summary, content, user):
+def post_micropub(summary, content, user, log_uri=None):
     return requests.post(user.micropub_uri, headers={
         'Authorization': 'Bearer %s' % user.access_token
     }, json={
@@ -42,6 +42,9 @@ def post_micropub(summary, content, user):
                 {
                     'html': content
                 }
-            ]
+            ],
+            'syndication': filter(lambda x: x != None, [
+                log_uri
+            ])
         }
     })

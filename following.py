@@ -67,7 +67,7 @@ def actually_follow_logs(http):
                 continue
             log_uri = expand(log.uri_template, data)
             text = http.get(log_uri).result().text
-            process_log(text, account.user, respect_threshold=True)
+            process_log(text, account.user, uri=log_uri, respect_threshold=True)
         app.logger.info('%s now at byte %s' % (log.uri, log.position))
         s.add(log)
     s.commit()

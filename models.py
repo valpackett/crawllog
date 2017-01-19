@@ -1,36 +1,49 @@
-from conf import db
+import os
+from sqlalchemy import Column, ForeignKey, Integer, Text, Boolean, create_engine
+from sqlalchemy.orm import sessionmaker, backref, relationship
+from sqlalchemy.ext.declarative import declarative_base
+
+def my_sessionmaker():
+    engine = create_engine(os.environ.get('CRAWLLOG_DATABASE_URI', 'sqlite:////tmp/test.db'))
+    Session = sessionmaker(bind=engine)
+    return Session
+
+Model = declarative_base()
+
+class Server(Model):
+    __tablename__ = 'server'
+    id = Column(Integer, primary_key=True)
+    name = Column(Text)
 
 
-class Server(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.Text)
+class ServerLog(Model):
+    __tablename__ = 'server_log'
+    id = Column(Integer, primary_key=True)
+    uri = Column(Text)
+    uri_template = Column(Text)
+    crawl_month_fix = Column(Boolean)
+    position = Column(Integer)
+    server_id = Column(Integer, ForeignKey('server.id'))
+    server = relationship('Server', backref=backref('logs', lazy='dynamic'))
 
 
-class ServerLog(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    uri = db.Column(db.Text)
-    uri_template = db.Column(db.Text)
-    crawl_month_fix = db.Column(db.Boolean)
-    position = db.Column(db.Integer)
-    server_id = db.Column(db.Integer, db.ForeignKey('server.id'))
-    server = db.relationship('Server', backref=db.backref('logs', lazy='dynamic'))
+class User(Model):
+    __tablename__ = 'user'
+    id = Column(Integer, primary_key=True)
+    uri = Column(Text)
+    micropub_uri = Column(Text)
+    access_token = Column(Text)
 
 
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    uri = db.Column(db.Text)
-    micropub_uri = db.Column(db.Text)
-    access_token = db.Column(db.Text)
-
-
-class UserOnServer(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.Text)
-    auto_pub_threshold = db.Column(db.Integer)
-    server_id = db.Column(db.Integer, db.ForeignKey('server.id'))
-    server = db.relationship('Server', backref=db.backref('server_users', lazy='dynamic'))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    user = db.relationship('User', backref=db.backref('user_servers', lazy='dynamic'))
+class UserOnServer(Model):
+    __tablename__ = 'user_on_server'
+    id = Column(Integer, primary_key=True)
+    name = Column(Text)
+    auto_pub_threshold = Column(Integer)
+    server_id = Column(Integer, ForeignKey('server.id'))
+    server = relationship('Server', backref=backref('server_users', lazy='dynamic'))
+    user_id = Column(Integer, ForeignKey('user.id'))
+    user = relationship('User', backref=backref('user_servers', lazy='dynamic'))
 
 
 def upsert_preserving_position(s, log):
@@ -43,8 +56,7 @@ def upsert_preserving_position(s, log):
 
 # check new data at: https://github.com/crawl/scoring/blob/master/sources.yml
 def setup_db():
-    db.create_all()
-    s = db.session()
+    s = Session()
     cao    = Server(id=0, name='crawl.akrasiac.org')
     cszo   = Server(id=1, name='crawl.s-z.org')
     # cdo    = Server(id=2, name='crawl.develz.org') # Doesn't even return Content-Length
@@ -58,18 +70,18 @@ def setup_db():
     [s.merge(server) for server in [cao, cszo]]
     [upsert_preserving_position(s, data) for data in [
          # DO NOT CHANGE ID!
-        (0,       cao,     'http://crawl.akrasiac.org/logfile-git',               'http://crawl.akrasiac.org/rawdata/{name}/morgue-{name}-{end}.txt',                True,  301284125),
-        (1,       cao,     'http://crawl.akrasiac.org/logfile10',                 'http://crawl.akrasiac.org/rawdata/{name}/morgue-{name}-{end}.txt',                True,  27951741),
-        (2,       cao,     'http://crawl.akrasiac.org/logfile11',                 'http://crawl.akrasiac.org/rawdata/{name}/morgue-{name}-{end}.txt',                True,  13018117),
-        (3,       cao,     'http://crawl.akrasiac.org/logfile12',                 'http://crawl.akrasiac.org/rawdata/{name}/morgue-{name}-{end}.txt',                True,  23945857),
-        (4,       cao,     'http://crawl.akrasiac.org/logfile13',                 'http://crawl.akrasiac.org/rawdata/{name}/morgue-{name}-{end}.txt',                True,  26046722),
-        (5,       cao,     'http://crawl.akrasiac.org/logfile14',                 'http://crawl.akrasiac.org/rawdata/{name}/morgue-{name}-{end}.txt',                True,  29912966),
-        (6,       cao,     'http://crawl.akrasiac.org/logfile15',                 'http://crawl.akrasiac.org/rawdata/{name}/morgue-{name}-{end}.txt',                True,  62616756),
-        (7,       cao,     'http://crawl.akrasiac.org/logfile16',                 'http://crawl.akrasiac.org/rawdata/{name}/morgue-{name}-{end}.txt',                True,  66446547),
-        (8,       cao,     'http://crawl.akrasiac.org/logfile17',                 'http://crawl.akrasiac.org/rawdata/{name}/morgue-{name}-{end}.txt',                True,  52337094),
-        (9,       cao,     'http://crawl.akrasiac.org/logfile18',                 'http://crawl.akrasiac.org/rawdata/{name}/morgue-{name}-{end}.txt',                True,  0),
+        (0,       cao,     'http://crawl.akrasiac.org/logfile-git',               'http://crawl.akrasiac.org/rawdata/{name}/morgue-{name}-{end}.txt',                True,  360910030),
+        (1,       cao,     'http://crawl.akrasiac.org/logfile10',                 'http://crawl.akrasiac.org/rawdata/{name}/morgue-{name}-{end}.txt',                True,  28041164),
+        (2,       cao,     'http://crawl.akrasiac.org/logfile11',                 'http://crawl.akrasiac.org/rawdata/{name}/morgue-{name}-{end}.txt',                True,  13081547),
+        (3,       cao,     'http://crawl.akrasiac.org/logfile12',                 'http://crawl.akrasiac.org/rawdata/{name}/morgue-{name}-{end}.txt',                True,  24040176),
+        (4,       cao,     'http://crawl.akrasiac.org/logfile13',                 'http://crawl.akrasiac.org/rawdata/{name}/morgue-{name}-{end}.txt',                True,  26115012),
+        (5,       cao,     'http://crawl.akrasiac.org/logfile14',                 'http://crawl.akrasiac.org/rawdata/{name}/morgue-{name}-{end}.txt',                True,  30000618),
+        (6,       cao,     'http://crawl.akrasiac.org/logfile15',                 'http://crawl.akrasiac.org/rawdata/{name}/morgue-{name}-{end}.txt',                True,  62805919),
+        (7,       cao,     'http://crawl.akrasiac.org/logfile16',                 'http://crawl.akrasiac.org/rawdata/{name}/morgue-{name}-{end}.txt',                True,  66794598),
+        (8,       cao,     'http://crawl.akrasiac.org/logfile17',                 'http://crawl.akrasiac.org/rawdata/{name}/morgue-{name}-{end}.txt',                True,  62839820),
+        (9,       cao,     'http://crawl.akrasiac.org/logfile18',                 'http://crawl.akrasiac.org/rawdata/{name}/morgue-{name}-{end}.txt',                True,  61363158),
         (10,      cao,     'http://crawl.akrasiac.org/logfile19',                 'http://crawl.akrasiac.org/rawdata/{name}/morgue-{name}-{end}.txt',                True,  0),
-        (1000,    cszo,    'http://dobrazupa.org/meta/git/logfile',               'http://dobrazupa.org/morgue/{name}/morgue-{name}-{end}.txt',                      True,  401360774),
+        (1000,    cszo,    'http://dobrazupa.org/meta/git/logfile',               'http://dobrazupa.org/morgue/{name}/morgue-{name}-{end}.txt',                      True,  406149942),
         (1001,    cszo,    'http://dobrazupa.org/meta/0.10/logfile',              'http://dobrazupa.org/morgue/{name}/morgue-{name}-{end}.txt',                      True,  1376098),
         (1002,    cszo,    'http://dobrazupa.org/meta/0.11/logfile',              'http://dobrazupa.org/morgue/{name}/morgue-{name}-{end}.txt',                      True,  32006985),
         (1003,    cszo,    'http://dobrazupa.org/meta/0.12/logfile',              'http://dobrazupa.org/morgue/{name}/morgue-{name}-{end}.txt',                      True,  26769971),
@@ -77,9 +89,9 @@ def setup_db():
         (1005,    cszo,    'http://dobrazupa.org/meta/0.14/logfile',              'http://dobrazupa.org/morgue/{name}/morgue-{name}-{end}.txt',                      True,  20215651),
         (1006,    cszo,    'http://dobrazupa.org/meta/0.15/logfile',              'http://dobrazupa.org/morgue/{name}/morgue-{name}-{end}.txt',                      True,  38427072),
         (1007,    cszo,    'http://dobrazupa.org/meta/0.16/logfile',              'http://dobrazupa.org/morgue/{name}/morgue-{name}-{end}.txt',                      True,  29014592),
-        (1008,    cszo,    'http://dobrazupa.org/meta/0.17/logfile',              'http://dobrazupa.org/morgue/{name}/morgue-{name}-{end}.txt',                      True,  46370874),
+        (1008,    cszo,    'http://dobrazupa.org/meta/0.17/logfile',              'http://dobrazupa.org/morgue/{name}/morgue-{name}-{end}.txt',                      True,  47200014),
         (1009,    cszo,    'http://dobrazupa.org/meta/0.18/logfile',              'http://dobrazupa.org/morgue/{name}/morgue-{name}-{end}.txt',                      True,  0),
-        (3000,    clan,    'http://underhound.eu:81/crawl/meta/git/logfile',      'http://underhound.eu:81/crawl/morgue/{name}/morgue-{name}-{end}.txt',             True,  89930316),
+        (3000,    clan,    'http://underhound.eu:81/crawl/meta/git/logfile',      'http://underhound.eu:81/crawl/morgue/{name}/morgue-{name}-{end}.txt',             True,  112265829),
         (3001,    clan,    'http://underhound.eu:81/crawl/meta/0.10/logfile',     'http://underhound.eu:81/crawl/morgue/{name}/morgue-{name}-{end}.txt',             True,  106071),
         (3002,    clan,    'http://underhound.eu:81/crawl/meta/0.11/logfile',     'http://underhound.eu:81/crawl/morgue/{name}/morgue-{name}-{end}.txt',             True,  79132),
         (3003,    clan,    'http://underhound.eu:81/crawl/meta/0.12/logfile',     'http://underhound.eu:81/crawl/morgue/{name}/morgue-{name}-{end}.txt',             True,  1632644),
@@ -87,18 +99,18 @@ def setup_db():
         (3005,    clan,    'http://underhound.eu:81/crawl/meta/0.14/logfile',     'http://underhound.eu:81/crawl/morgue/{name}/morgue-{name}-{end}.txt',             True,  7359165),
         (3006,    clan,    'http://underhound.eu:81/crawl/meta/0.15/logfile',     'http://underhound.eu:81/crawl/morgue/{name}/morgue-{name}-{end}.txt',             True,  7427725),
         (3007,    clan,    'http://underhound.eu:81/crawl/meta/0.16/logfile',     'http://underhound.eu:81/crawl/morgue/{name}/morgue-{name}-{end}.txt',             True,  6529896),
-        (3008,    clan,    'http://underhound.eu:81/crawl/meta/0.17/logfile',     'http://underhound.eu:81/crawl/morgue/{name}/morgue-{name}-{end}.txt',             True,  20628703),
-        (3009,    clan,    'http://underhound.eu:81/crawl/meta/0.18/logfile',     'http://underhound.eu:81/crawl/morgue/{name}/morgue-{name}-{end}.txt',             True,  0),
+        (3008,    clan,    'http://underhound.eu:81/crawl/meta/0.17/logfile',     'http://underhound.eu:81/crawl/morgue/{name}/morgue-{name}-{end}.txt',             True,  23536470),
+        (3009,    clan,    'http://underhound.eu:81/crawl/meta/0.18/logfile',     'http://underhound.eu:81/crawl/morgue/{name}/morgue-{name}-{end}.txt',             True,  24030317),
         (3010,    clan,    'http://underhound.eu:81/crawl/meta/0.19/logfile',     'http://underhound.eu:81/crawl/morgue/{name}/morgue-{name}-{end}.txt',             True,  0),
-        (4000,    cbro,    'http://crawl.berotato.org/crawl/meta/git/logfile',    'http://crawl.berotato.org/crawl/morgue/{name}/morgue-{name}-{end}.txt',           True,  54048387),
+        (4000,    cbro,    'http://crawl.berotato.org/crawl/meta/git/logfile',    'http://crawl.berotato.org/crawl/morgue/{name}/morgue-{name}-{end}.txt',           True,  144691367),
         (4001,    cbro,    'http://crawl.berotato.org/crawl/meta/0.13/logfile',   'http://crawl.berotato.org/crawl/morgue/{name}/morgue-{name}-{end}.txt',           True,  424187),
         (4002,    cbro,    'http://crawl.berotato.org/crawl/meta/0.14/logfile',   'http://crawl.berotato.org/crawl/morgue/{name}/morgue-{name}-{end}.txt',           True,  3267516),
         (4003,    cbro,    'http://crawl.berotato.org/crawl/meta/0.15/logfile',   'http://crawl.berotato.org/crawl/morgue/{name}/morgue-{name}-{end}.txt',           True,  4974258),
         (4004,    cbro,    'http://crawl.berotato.org/crawl/meta/0.16/logfile',   'http://crawl.berotato.org/crawl/morgue/{name}/morgue-{name}-{end}.txt',           True,  17165648),
         (4005,    cbro,    'http://crawl.berotato.org/crawl/meta/0.17/logfile',   'http://crawl.berotato.org/crawl/morgue/{name}/morgue-{name}-{end}.txt',           True,  20152628),
-        (4006,    cbro,    'http://crawl.berotato.org/crawl/meta/0.18/logfile',   'http://crawl.berotato.org/crawl/morgue/{name}/morgue-{name}-{end}.txt',           True,  0),
+        (4006,    cbro,    'http://crawl.berotato.org/crawl/meta/0.18/logfile',   'http://crawl.berotato.org/crawl/morgue/{name}/morgue-{name}-{end}.txt',           True,  44107731),
         (4006,    cbro,    'http://crawl.berotato.org/crawl/meta/0.19/logfile',   'http://crawl.berotato.org/crawl/morgue/{name}/morgue-{name}-{end}.txt',           True,  0),
-        (5000,    cwz,     'http://webzook.net/soup/trunk/logfile',               'http://webzook.net/soup/morgue/trunk/{name}/morgue-{name}-{end}.txt',             True,  103664998),
+        (5000,    cwz,     'http://webzook.net/soup/trunk/logfile',               'http://webzook.net/soup/morgue/trunk/{name}/morgue-{name}-{end}.txt',             True,  288275423),
        #(5001,    cwz,     'http://webzook.net/soup/0.13/logfile',                'http://webzook.net/soup/morgue/0.13/{name}/morgue-{name}-{end}.txt',              True,  0),
        #(5002,    cwz,     'http://webzook.net/soup/0.14/logfile',                'http://webzook.net/soup/morgue/0.14/{name}/morgue-{name}-{end}.txt',              True,  0),
        #(5003,    cwz,     'http://webzook.net/soup/0.15/logfile',                'http://webzook.net/soup/morgue/0.15/{name}/morgue-{name}-{end}.txt',              True,  0),
@@ -111,7 +123,7 @@ def setup_db():
        #(6002,    lld,     'http://lazy-life.ddo.jp:8080/meta/0.15/logfile',      'http://lazy-life.ddo.jp:8080/morgue/{name}/morgue-{name}-{end}.txt',              True,  0),
        #(6003,    lld,     'http://lazy-life.ddo.jp:8080/meta/0.16/logfile',      'http://lazy-life.ddo.jp:8080/morgue/{name}/morgue-{name}-{end}.txt',              True,  0),
        #(6004,    lld,     'http://lazy-life.ddo.jp:8080/meta/0.17/logfile',      'http://lazy-life.ddo.jp:8080/morgue/{name}/morgue-{name}-{end}.txt',              True,  0),
-        (7000,    cxc,     'http://crawl.xtahua.com/crawl/meta/git/logfile',      'http://crawl.xtahua.com/crawl/morgue/{name}/morgue-{name}-{end}.txt',             True,  45699790),
+        (7000,    cxc,     'http://crawl.xtahua.com/crawl/meta/git/logfile',      'http://crawl.xtahua.com/crawl/morgue/{name}/morgue-{name}-{end}.txt',             True,  81420955),
         (7001,    cxc,     'http://crawl.xtahua.com/crawl/meta/0.14/logfile',     'http://crawl.xtahua.com/crawl/morgue/{name}/morgue-{name}-{end}.txt',             True,  295987),
         (7002,    cxc,     'http://crawl.xtahua.com/crawl/meta/0.15/logfile',     'http://crawl.xtahua.com/crawl/morgue/{name}/morgue-{name}-{end}.txt',             True,  1346634),
         (7003,    cxc,     'http://crawl.xtahua.com/crawl/meta/0.16/logfile',     'http://crawl.xtahua.com/crawl/morgue/{name}/morgue-{name}-{end}.txt',             True,  9592324),
@@ -122,9 +134,9 @@ def setup_db():
        #(8001,    cpo,     'https://crawl.project357.org/dcss-logfiles-0.15',     'http://crawl.project357.org/morgue/{name}/morgue-{name}-{end}.txt',               True,  0),
        #(8002,    cpo,     'https://crawl.project357.org/dcss-logfiles-0.16',     'http://crawl.project357.org/morgue/{name}/morgue-{name}-{end}.txt',               True,  0),
        #(8003,    cpo,     'https://crawl.project357.org/dcss-logfiles-0.17',     'http://crawl.project357.org/morgue/{name}/morgue-{name}-{end}.txt',               True,  0),
-        (9000,     cjr,     'https://crawl.jorgrun.rocks/meta/git/logfile',        'http://crawl.jorgrun.rocks/morgue/{name}/morgue-{name}-{end}.txt',                True,  0),
-        (9001,     cjr,     'https://crawl.jorgrun.rocks/meta/0.17/logfile',       'http://crawl.jorgrun.rocks/morgue/{name}/morgue-{name}-{end}.txt',                True,  0),
-        (9002,     cjr,     'https://crawl.jorgrun.rocks/meta/0.18/logfile',       'http://crawl.jorgrun.rocks/morgue/{name}/morgue-{name}-{end}.txt',                True,  0),
-        (9003,     cjr,     'https://crawl.jorgrun.rocks/meta/0.19/logfile',       'http://crawl.jorgrun.rocks/morgue/{name}/morgue-{name}-{end}.txt',                True,  0),
+        (9000,     cjr,     'https://crawl.jorgrun.rocks/meta/git/logfile',        'http://crawl.jorgrun.rocks/morgue/{name}/morgue-{name}-{end}.txt',               True,  12167952),
+        (9001,     cjr,     'https://crawl.jorgrun.rocks/meta/0.17/logfile',       'http://crawl.jorgrun.rocks/morgue/{name}/morgue-{name}-{end}.txt',               True,  99286),
+        (9002,     cjr,     'https://crawl.jorgrun.rocks/meta/0.18/logfile',       'http://crawl.jorgrun.rocks/morgue/{name}/morgue-{name}-{end}.txt',               True,  5078627),
+        (9003,     cjr,     'https://crawl.jorgrun.rocks/meta/0.19/logfile',       'http://crawl.jorgrun.rocks/morgue/{name}/morgue-{name}-{end}.txt',               True,  0),
     ]]
     s.commit()

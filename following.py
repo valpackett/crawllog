@@ -30,8 +30,8 @@ def follow_logs():
     while True:
         try:
             actually_follow_logs(http)
-        except:
-            pass
+        except Exception as e:
+            print(e)
         gc.collect()
         time.sleep(60)
 
@@ -39,6 +39,7 @@ def actually_follow_logs(http):
     logging.info('Starting update')
     s = Session()
     logs = s.query(ServerLog).all()
+    logging.info('Requesting %s logs' % len(logs))
     head_reqs = [http.head(log.uri) for log in logs]
     logs_to_get = [(log, req.result().headers['Content-Length'])
                    for log, req in zip(logs, head_reqs)

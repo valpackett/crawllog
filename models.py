@@ -9,6 +9,7 @@ def my_sessionmaker():
     return Session
 
 Model = declarative_base()
+Session = my_sessionmaker()
 
 class Server(Model):
     __tablename__ = 'server'

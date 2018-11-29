@@ -68,7 +68,7 @@ def setup_db():
     cxc    = Server(id=7, name='crawl.xtahua.com')
     # cpo    = Server(id=8, name='crawl.project357.org') # Content-Length
     # cjr    = Server(id=9, name='crawl.jorgrun.rocks') # RIP
-    [s.merge(server) for server in [cao, cszo]]
+    [s.merge(server) for server in [cao]]
     [upsert_preserving_position(s, data) for data in [
          # DO NOT CHANGE ID!
         (0,       cao,     'http://crawl.akrasiac.org/logfile-git',               'http://crawl.akrasiac.org/rawdata/{name}/morgue-{name}-{end}.txt',                True,  360910030),

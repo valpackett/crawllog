@@ -1,0 +1,34 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+alembic = "*"
+"beautifulsoup4" = "*"
+cchardet = "*"
+chardet = "*"
+click = "*"
+itsdangerous = "*"
+"psycopg2cffi" = "*"
+python-editor = "*"
+requests = "*"
+requests-futures = "*"
+simplejson = "*"
+uritemplate = "*"
+Flask = "*"
+Flask-Micropub = "*"
+Flask-Migrate = "*"
+Flask-Script = "*"
+Flask-SQLAlchemy = {git = "https://github.com/nickw444/flask-sqlalchemy"}
+"Jinja2" = "*"
+Mako = "*"
+MarkupSafe = "*"
+SQLAlchemy = "*"
+uWSGI = "*"
+Werkzeug = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.7"

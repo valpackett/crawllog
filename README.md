@@ -1,17 +1,18 @@
-# crawllog [![unlicense](https://img.shields.io/badge/un-license-green.svg?style=flat)](http://unlicense.org)
+[![unlicense](https://img.shields.io/badge/un-license-green.svg?style=flat)](https://unlicense.org)
 
-A webapp that posts your [Dungeon Crawl Stone Soup](http://crawl.develz.org/) game logs (morgue files) to your website using [Micropub](http://micropub.net/).
+# crawllog
 
-```bash
-$ python3.6 -m venv venv
-$ . venv/bin/activate
-$ pip install -r requirements.txt
-$ export CRAWLLOG_DATABASE_URI=postgres://localhost/crawllog
-$ ./manage.py db upgrade
-$ ./manage.py upsert_content
-$ ./manage.py runserver # dev server
-$ ./following.py # worker process
-$ uwsgi --wsgi-file app.py --callable app ...
+A webapp that posts your [Dungeon Crawl Stone Soup](https://crawl.develz.org/) game logs (morgue files) to your website using [Micropub](https://micropub.net/).
+
+```shell
+$ doas pkg install py36-pipenv py37-sqlite3 postgresql11-client
+$ pipenv sync
+$ export CRAWLLOG_DATABASE_URI=postgresql+psycopg2cffi://localhost/crawllog
+$ pipenv run ./manage.py db upgrade
+$ pipenv run ./manage.py upsert_content
+$ pipenv run ./manage.py runserver # dev server
+$ pipenv run ./following.py # worker process
+$ pipenv run uwsgi --wsgi-file app.py --callable app ...
 # see conf.py for env variables used
 ```
 
